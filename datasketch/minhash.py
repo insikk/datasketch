@@ -89,6 +89,13 @@ class MinHash(object):
     def _parse_hashvalues(self, hashvalues):
         return np.array(hashvalues, dtype=np.uint64)
 
+
+    def update_with_intval(self, intval):
+        hv = intval
+        a, b = self.permutations
+        phv = np.bitwise_and((a * hv + b) % _mersenne_prime, np.uint64(_max_hash))
+        self.hashvalues = np.minimum(phv, self.hashvalues)
+
     def update(self, b):
         '''Update this MinHash with a new value.
         
@@ -103,9 +110,7 @@ class MinHash(object):
                 minhash.update("new value".encode('utf-8'))
         '''
         hv = struct.unpack('<I', self.hashobj(b).digest()[:4])[0]
-        a, b = self.permutations
-        phv = np.bitwise_and((a * hv + b) % _mersenne_prime, np.uint64(_max_hash))
-        self.hashvalues = np.minimum(phv, self.hashvalues)
+        self.update_with_intval(hv)
 
     def jaccard(self, other):
         '''Estimate the `Jaccard similarity`_ (resemblance) between the sets
